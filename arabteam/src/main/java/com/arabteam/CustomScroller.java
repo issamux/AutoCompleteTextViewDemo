@@ -9,7 +9,7 @@ import android.widget.Scroller;
  */
 public class CustomScroller extends Scroller  {
 
-    private int mDuration = 6000;
+    private int mDuration = 2000;
 
     public CustomScroller(Context context) {
         super(context);

@@ -14,10 +14,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ScrollView;
+import android.widget.Toast;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -26,20 +28,25 @@ public class MainActivity extends ActionBarActivity {
 
     private static final String TAG = "MainActivity";
     private static ArrayList<String> arrayListBtnName = new ArrayList<String>();
-    CustomScroller scroller;
+    private ArrayAdapter<String> adapter;
+    private LayoutInflater inflator;
 
     static {
-        for (int i = 1; i < 7; i++)
+        for (int i = 1; i < 6; i++)
             arrayListBtnName.add("Part" + i);
     }
 
+    private CustomScroller scroller;
+    private AutoCompleteTextView textView;
     private Button b1, b2, b3, b4, b5;
     private ScrollView container;
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = this;
         initUI();
     }
 
@@ -57,24 +64,38 @@ public class MainActivity extends ActionBarActivity {
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
 
-        LayoutInflater inflator = (LayoutInflater) this
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        inflator = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View v = inflator.inflate(R.layout.actionbar, null);
-
         actionBar.setCustomView(v);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+        adapter = new ArrayAdapter<String>(context,
                 android.R.layout.simple_dropdown_item_1line, arrayListBtnName);
-        final AutoCompleteTextView textView = (AutoCompleteTextView) v.findViewById(R.id.editText1);
+        textView = (AutoCompleteTextView) v.findViewById(R.id.editText1);
         textView.setAdapter(adapter);
         textView.setOnDismissListener(new AutoCompleteTextView.OnDismissListener() {
             @Override
             public void onDismiss() {
-                String word = textView.getText().toString();
-                if (!TextUtils.isEmpty(word) && arrayListBtnName.contains(word))
-                    focusOnView(getBtn(word));
+                checkWord();
             }
         });
+
+        textView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                checkWord();
+            }
+        });
+        textView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                checkWord();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
 
         try {
             Field mScroller = ScrollView.class.getDeclaredField("mScroller");
@@ -86,6 +107,16 @@ public class MainActivity extends ActionBarActivity {
         } catch (IllegalAccessException e) {
         }
 
+    }
+
+    public void checkWord() {
+        String word = textView.getText().toString();
+        if (!TextUtils.isEmpty(word)) {
+            if (arrayListBtnName.contains(word))
+                focusOnView(getBtn(word));
+            else
+                Toast.makeText(context, "word not found!", Toast.LENGTH_LONG).show();
+        }
     }
 
     private Button getBtn(String name) {
@@ -104,9 +135,10 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     container.smoothScrollTo(0, searchedBtn.getTop());
-                    searchedBtn.requestFocus();
                 }
             });
+        else
+            Toast.makeText(context,"Button not found!",Toast.LENGTH_LONG).show();
     }
 
     @Override
