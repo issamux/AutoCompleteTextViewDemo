@@ -1,7 +1,9 @@
 package com.arabteam;
 
+import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
@@ -11,24 +13,28 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ScrollView;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity {
 
     private static final String TAG = "MainActivity";
     private static ArrayList<String> arrayListBtnName = new ArrayList<String>();
-    private Button b1, b2, b3, b4, b5;
-    private ScrollView container;
+    CustomScroller scroller;
 
     static {
         for (int i = 1; i < 7; i++)
             arrayListBtnName.add("Part" + i);
     }
+
+    private Button b1, b2, b3, b4, b5;
+    private ScrollView container;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +43,7 @@ public class MainActivity extends ActionBarActivity {
         initUI();
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     private void initUI() {
         container = (ScrollView) findViewById(R.id.scrollView);
         //
@@ -45,10 +52,7 @@ public class MainActivity extends ActionBarActivity {
         b3 = (Button) findViewById(R.id.button3);
         b4 = (Button) findViewById(R.id.button4);
         b5 = (Button) findViewById(R.id.button5);
-
-
         //
-
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowCustomEnabled(true);
@@ -72,6 +76,16 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+        try {
+            Field mScroller = ScrollView.class.getDeclaredField("mScroller");
+            mScroller.setAccessible(true);
+            scroller = new CustomScroller(container.getContext(), new AccelerateInterpolator());
+            mScroller.set(container, scroller);
+        } catch (NoSuchFieldException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (IllegalAccessException e) {
+        }
+
     }
 
     private Button getBtn(String name) {
@@ -89,7 +103,7 @@ public class MainActivity extends ActionBarActivity {
             new Handler().post(new Runnable() {
                 @Override
                 public void run() {
-                    container.scrollTo(0, searchedBtn.getTop());
+                    container.smoothScrollTo(0, searchedBtn.getTop());
                     searchedBtn.requestFocus();
                 }
             });
